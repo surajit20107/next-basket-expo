@@ -1,39 +1,62 @@
+import { authClient } from "@/lib/auth-client";
+import type { CartItem } from "@/types";
+import { Ionicons } from "@expo/vector-icons";
+import { router } from "expo-router";
+import { useEffect, useState } from "react";
 import {
-  View,
-  Text,
-  StyleSheet,
   FlatList,
   Image,
   Pressable,
+  StyleSheet,
+  Text,
+  View,
 } from "react-native";
-import { Ionicons } from "@expo/vector-icons";
-
-const cartItems = [
-  {
-    _id: "1",
-    name: "Sports Shoes",
-    price: 499,
-    quantity: 1,
-    image: "https://res.cloudinary.com/dwlfhknvs/image/upload/v1779973347/photo-1779122873880-b2aa20d95e6c_etadyy.jpg",
-  },
-  {
-    _id: "2",
-    name: "Room Decor Painting",
-    price: 590,
-    quantity: 2,
-    image: "https://res.cloudinary.com/dwlfhknvs/image/upload/v1779971633/photo-1776193550369-3f9c6077b205_qhe5cs.jpg",
-  },
-];
+import { toast } from "sonner-native";
 
 export default function CartPage() {
-  const total = cartItems.reduce((acc, item) => acc + item.price * item.quantity, 0)
+  const { data } = authClient.useSession();
+  if (!data?.user) {
+    router.replace("/login");
+    return;
+  }
+
+  const [cartItems, setCartItems] = useState<CartItem[] | null>(null);
+  const [loading, setLoading] = useState(false);
+
+  const subtotal =
+    cartItems?.reduce((sum, item) => sum + (item.totalPrice || 0), 0) || 0;
+  const tax = subtotal * 0.08; // 8% tax example
+  const shipping = subtotal > 500 ? 0 : 9.99; // Free shipping over rs 500
+  const total = subtotal + tax + shipping;
+
+  const fetchUserCart = async () => {
+    setLoading(true);
+    try {
+      const res = await fetch(
+        `${process.env.EXPO_PUBLIC_BASE_URL}/api/cart?userId=${data?.user.id}`,
+      );
+      if (res.status === 200) {
+        const data = await res.json();
+        setCartItems(data.userCart);
+      } else {
+        toast.error("Failed to fetch cart items.");
+      }
+    } catch (error) {
+      toast.error("Failed to fetch cart items.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchUserCart();
+  }, [data?.user?.id]);
+
   return (
     <View style={styles.container}>
       <View style={styles.headerContainer}>
         <Text style={styles.title}>My Cart</Text>
-        <Text style={styles.subtitle}>
-          {cartItems.length} Items
-        </Text>
+        <Text style={styles.subtitle}>{cartItems?.length} Items</Text>
       </View>
 
       <FlatList
@@ -46,48 +69,32 @@ export default function CartPage() {
         renderItem={({ item }) => (
           <View style={styles.card}>
             <Image
-              source={{ uri: item.image }}
+              source={{ uri: item?.productId?.image }}
               style={styles.image}
             />
 
             <View style={styles.content}>
               <Text numberOfLines={1} style={styles.productName}>
-                {item.name}
+                {item?.productId?.name}
               </Text>
 
-              <Text style={styles.price}>
-                ₹{item.price}
-              </Text>
+              <Text style={styles.price}>₹{item?.totalPrice.toFixed(2)}</Text>
 
               <View style={styles.bottomRow}>
                 <View style={styles.quantityContainer}>
                   <Pressable style={styles.quantityButton}>
-                    <Ionicons
-                      name="remove"
-                      size={16}
-                      color="#111827"
-                    />
+                    <Ionicons name="remove" size={16} color="#111827" />
                   </Pressable>
 
-                  <Text style={styles.quantityText}>
-                    {item.quantity}
-                  </Text>
+                  <Text style={styles.quantityText}>{item?.quantity}</Text>
 
                   <Pressable style={styles.quantityButton}>
-                    <Ionicons
-                      name="add"
-                      size={16}
-                      color="#111827"
-                    />
+                    <Ionicons name="add" size={16} color="#111827" />
                   </Pressable>
                 </View>
 
                 <Pressable style={styles.deleteButton}>
-                  <Ionicons
-                    name="trash-outline"
-                    size={18}
-                    color="#ef4444"
-                  />
+                  <Ionicons name="trash-outline" size={18} color="#ef4444" />
                 </Pressable>
               </View>
             </View>
@@ -96,18 +103,39 @@ export default function CartPage() {
       />
 
       <View style={styles.checkoutContainer}>
-        <View style={styles.totalRow}>
-          <View>
-            <Text style={styles.totalLabel}>Total</Text>
-            <Text style={styles.totalPrice}>
-              ₹{total}
+        <View style={styles.summaryContainer}>
+          <View style={styles.summaryRow}>
+            <Text style={styles.summaryLabel}>Subtotal</Text>
+            <Text style={styles.summaryValue}>₹{subtotal?.toFixed(2)}</Text>
+          </View>
+
+          <View style={styles.summaryRow}>
+            <Text style={styles.summaryLabel}>Tax (8%)</Text>
+            <Text style={styles.summaryValue}>₹{tax?.toFixed(2)}</Text>
+          </View>
+
+          <View style={styles.summaryRow}>
+            <Text style={styles.summaryLabel}>Shipping</Text>
+            <Text style={styles.summaryValue}>
+              {shipping === 0 ? "Free" : `₹${shipping?.toFixed(2)}`}
             </Text>
           </View>
 
+          <View style={styles.divider} />
+
+          <View style={styles.totalContainer}>
+            <Text style={styles.totalText}>Total</Text>
+            <Text style={styles.totalAmount}>₹{total?.toFixed(2)}</Text>
+          </View>
+
           <Pressable style={styles.checkoutButton}>
-            <Text style={styles.checkoutText}>
-              Checkout
-            </Text>
+            <View>
+              <Text style={styles.checkoutSmallText}>Pay Now</Text>
+
+              <Text style={styles.checkoutAmount}>₹{total?.toFixed(2)}</Text>
+            </View>
+
+            <Ionicons name="arrow-forward-circle" size={28} color="#fff" />
           </Pressable>
         </View>
       </View>
@@ -262,14 +290,77 @@ const styles = StyleSheet.create({
 
   checkoutButton: {
     backgroundColor: "#111827",
-    paddingHorizontal: 28,
+    borderRadius: 20,
+    paddingHorizontal: 20,
     paddingVertical: 16,
-    borderRadius: 18,
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginTop: 12,
   },
 
   checkoutText: {
     color: "#fff",
     fontSize: 15,
     fontWeight: "700",
+  },
+
+  summaryContainer: {
+    gap: 12,
+  },
+
+  summaryRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+
+  summaryLabel: {
+    fontSize: 15,
+    color: "#6b7280",
+    fontWeight: "500",
+  },
+
+  summaryValue: {
+    fontSize: 15,
+    color: "#111827",
+    fontWeight: "600",
+  },
+
+  divider: {
+    height: 1,
+    backgroundColor: "#e5e7eb",
+    marginVertical: 4,
+  },
+
+  totalContainer: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginTop: 4,
+    marginBottom: 8,
+  },
+
+  checkoutSmallText: {
+    color: "#9ca3af",
+    fontSize: 12,
+  },
+
+  checkoutAmount: {
+    color: "#fff",
+    fontSize: 20,
+    fontWeight: "800",
+  },
+
+  totalText: {
+    fontSize: 18,
+    fontWeight: "700",
+    color: "#111827",
+  },
+
+  totalAmount: {
+    fontSize: 28,
+    fontWeight: "800",
+    color: "#111827",
   },
 });

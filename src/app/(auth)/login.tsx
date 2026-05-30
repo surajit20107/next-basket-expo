@@ -12,7 +12,7 @@ import { useState } from "react";
 import { authClient } from "@/lib/auth-client";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 import { router } from "expo-router";
-import { GoogleLogin } from "@/components/GoogleLogin";
+// import { GoogleLogin } from "@/components/GoogleLogin";
 
 export default function LoginScreen() {
   const [email, setEmail] = useState("");
@@ -115,7 +115,7 @@ export default function LoginScreen() {
                 {loading ? "logging in..." : "Login"}
               </Text>
             </Pressable>
-            <GoogleLogin />
+            {/* <GoogleLogin /> */}
           </View>
 
           <View style={styles.footerContainer}>
