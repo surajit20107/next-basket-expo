@@ -1,43 +1,17 @@
-import type { ProductResponse, ProductType } from "@/types";
+import type { ProductResponse } from "@/types";
 import { useEffect, useState } from "react";
-import { Alert, FlatList, Image, StyleSheet, Text, View } from "react-native";
-
-function ProductItem({ item }: { item: ProductType }) {
-  return (
-    <View style={styles.card}>
-      <Image
-        source={{ uri: item.image }}
-        style={styles.image}
-        resizeMode="cover"
-      />
-
-      <View style={styles.contentContainer}>
-        <View style={styles.headerRow}>
-          <Text numberOfLines={1} style={styles.title}>
-            {item.name}
-          </Text>
-
-          <Text style={styles.price}>₹{item.price}</Text>
-        </View>
-
-        <Text numberOfLines={2} style={styles.description}>
-          {item.description} {item._id}
-        </Text>
-
-        <View style={styles.footerRow}>
-          <View style={styles.ratingContainer}>
-            <Text style={styles.star}>★</Text>
-            <Text style={styles.rating}>{item.rating}</Text>
-          </View>
-
-          <View style={styles.button}>
-            <Text style={styles.buttonText}>Add to Cart</Text>
-          </View>
-        </View>
-      </View>
-    </View>
-  );
-}
+import {
+  Alert,
+  FlatList,
+  Image,
+  StyleSheet,
+  Text,
+  View,
+  Pressable,
+} from "react-native";
+import { authClient } from "@/lib/auth-client";
+import { toast } from "sonner-native";
+import { router } from "expo-router";
 
 export function ProductCard() {
   const [product, setProduct] = useState<ProductResponse | null>(null);
@@ -45,32 +19,98 @@ export function ProductCard() {
   async function fetchProduct() {
     try {
       const res = await fetch(`${process.env.EXPO_PUBLIC_BASE_URL}/api/product`);
+
       if (!res.ok) {
         console.log(res);
       }
+
       const data = await res.json();
       setProduct(data);
     } catch (error) {
       console.log(error);
-      Alert.alert("error fetching product");
+      Alert.alert("Error fetching product");
     }
   }
 
-  // run this when components re-renders
   useEffect(() => {
     fetchProduct();
   }, []);
+
+  const addProductToCart = async (productId: string) => {
+    const { data } = await authClient.getSession()
+
+    if (!data?.user) {
+      router.replace('/login')
+      return
+    }
+
+    const userId = data?.user?.id
+
+    try {
+      const res = await fetch(`${process.env.EXPO_PUBLIC_BASE_URL}/api/cart`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ userId, productId })
+      })
+
+      if (res.status === 200) {
+        toast.success('Added to cart.')
+      } else {
+        toast.error('Something went wrong, Try agin later.')
+      }
+
+    } catch (error) {
+      toast.error('Something went wrong, Try agin later.')
+    }
+  }
 
   return (
     <View style={{ paddingBottom: 64 }}>
       <FlatList
         data={product?.products}
-        keyExtractor={(item) => item?._id}
+        keyExtractor={(item) => item._id}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{ paddingVertical: 12 }}
-        renderItem={({ item }) => <ProductItem item={item} />}
-        />
-      </View>
+        renderItem={({ item }) => (
+          <View style={styles.card}>
+            <Image
+              source={{ uri: item.image }}
+              style={styles.image}
+              resizeMode="cover"
+            />
+
+            <View style={styles.contentContainer}>
+              <View style={styles.headerRow}>
+                <Text numberOfLines={1} style={styles.title}>
+                  {item.name}
+                </Text>
+
+                <Text style={styles.price}>₹{item.price}</Text>
+              </View>
+
+              <Text numberOfLines={2} style={styles.description}>
+                {item.description}
+              </Text>
+
+              <View style={styles.footerRow}>
+                <View style={styles.ratingContainer}>
+                  <Text style={styles.star}>★</Text>
+                  <Text style={styles.rating}>{item.rating}</Text>
+                </View>
+
+                <Pressable onPress={()=>addProductToCart(item._id)}>
+                  <View style={styles.button}>
+                    <Text style={styles.buttonText}>Add to Cart</Text>
+                  </View>
+                </Pressable>
+              </View>
+            </View>
+          </View>
+        )}
+      />
+    </View>
   );
 }
 
