@@ -3,7 +3,6 @@ import { authClient } from "@/lib/auth-client";
 
 export default function ProtectedLayout() {
   const { data:session, isPending } = authClient.useSession()
-  console.log(session);
 
   if (isPending) return null;
 
