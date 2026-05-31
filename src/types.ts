@@ -12,22 +12,14 @@ export type ProductResponse = {
   hasMore: boolean;
 };
 
-// export type CartItem = {
-//   _id: string;
-//   name: string;
-//   price: number;
-//   quantity: number;
-//   image: string;
-// };
-
 export type CartItem = {
   _id: string;
   userId: string;
   productId: {
     _id: string;
-    name: string
+    name: string;
     price: number;
-    description: string
+    description: string;
     image: string;
     imagePublicId: string;
     category: string;
@@ -39,3 +31,71 @@ export type CartItem = {
   quantity: string;
   totalPrice: number;
 };
+
+export type orderRespone = {
+  _id: string;
+  userId: string;
+  products: {
+    product: {
+      _id: string;
+      name: string;
+      price: number;
+      image: string;
+    };
+    quantity: number;
+  }[];
+  totalPrice: number;
+  status: string;
+  paymentMethod: string;
+  paymentStatus: string;
+  deliveryAddress: string;
+  deliveryCity: string;
+  deliveryState: string;
+  createdAt: string;
+};
+
+
+// types.ts
+
+export interface Product {
+  _id: string;
+  name: string;
+  price: number;
+  description: string;
+  image: string;
+  imagePublicId: string;
+  category: string;
+  stock: number;
+  rating: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface OrderProduct {
+  _id: string;
+  quantity: number;
+  product: Product;
+}
+
+export interface OrderResponse {
+  _id: string;
+  userId: string;
+  products: OrderProduct[];
+  totalPrice: number;
+  status: string;
+  paymentMethod: string;
+  paymentStatus: string;
+  paymentId: string;
+  paymentSignature: string;
+  paymentDate: string;
+  deliveryDate: string;
+  deliveryAddress: string;
+  deliveryCity: string;
+  deliveryState: string;
+  deliveryCountry: string;
+  deliveryPincode: string;
+  deliveryPhone: string;
+  deliveryEmail: string;
+  createdAt: string;
+  updatedAt: string;
+}

@@ -4,70 +4,111 @@ import {
   FlatList,
   StyleSheet,
   Image,
+  ActivityIndicator,
 } from "react-native";
-
-const orders = [
-  {
-    _id: "1",
-    name: "Room Decor Painting",
-    price: 590,
-    image:
-      "https://res.cloudinary.com/dwlfhknvs/image/upload/v1779971633/photo-1776193550369-3f9c6077b205_qhe5cs.jpg",
-  },
-  {
-    _id: "2",
-    name: "Sports Shoes",
-    price: 499,
-    image:
-      "https://res.cloudinary.com/dwlfhknvs/image/upload/v1779973347/photo-1779122873880-b2aa20d95e6c_etadyy.jpg",
-  },
-  {
-    _id: "3",
-    name: "Facial Cleanup",
-    price: 799,
-    image:
-      "https://res.cloudinary.com/dwlfhknvs/image/upload/v1779973481/photo-1779142077668-fe26a95f459c_ejxevz.jpg",
-  },
-  {
-    _id: "4",
-    name: "Mouse & Keyboard",
-    price: 1299,
-    image:
-      "https://res.cloudinary.com/dwlfhknvs/image/upload/v1779980393/photo-1776824224280-13c38adbb6ee_vdtle5.jpg",
-  },
-];
+import { useState, useEffect } from "react";
+import { authClient } from "@/lib/auth-client";
+import { toast } from "sonner-native";
+import type { OrderProduct } from "@/types";
 
 export default function OrdersPage() {
+  const { data: session } = authClient.useSession();
+
+  const [orders, setOrders] = useState<OrderProduct[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  const fetchOrders = async () => {
+  if (!session?.user?.id) return
+
+  try {
+    setLoading(true);
+    const url = `${process.env.EXPO_PUBLIC_BASE_URL}/api/order?userId=${session.user.id}`;
+    const res = await fetch(url);
+    const text = await res.text();
+
+    if (!res.ok) {
+      toast.error(`API Error: ${res.status}`);
+      return;
+    }
+
+    const data = JSON.parse(text);
+    const products = data.flatMap((order: any) => order.products);
+
+    setOrders(products);
+  } catch (error) {
+    console.log("Fetch Error:", error);
+    toast.error("Failed to fetch orders");
+  } finally {
+    setLoading(false);
+  }
+};
+
+  useEffect(() => {
+    fetchOrders();
+  }, [session?.user?.id]);
+
+  if (!session?.user) {
+    return null;
+  }
+
+  if (loading) {
+    return (
+      <View style={styles.loader}>
+        <ActivityIndicator size="large" />
+      </View>
+    );
+  }
+
   return (
     <FlatList
-      style={styles.container}
+      contentContainerStyle={styles.container}
       data={orders}
       keyExtractor={(item) => item._id}
       renderItem={({ item }) => (
         <View style={styles.card}>
           <Image
-            source={{ uri: item.image }}
+            source={{ uri: item.product.image }}
             style={styles.image}
           />
 
           <View style={{ flex: 1 }}>
-            <Text style={styles.name}>{item.name}</Text>
-            <Text style={styles.price}>₹{item.price}</Text>
+            <Text style={styles.name}>
+              {item.product.name}
+            </Text>
+
+            <Text style={styles.price}>
+              ₹{item.product.price}
+            </Text>
+
+            <Text style={styles.quantity}>
+              Quantity: {item.quantity}
+            </Text>
+
             <Text style={styles.status}>
-              Delivered
+              Ordered
             </Text>
           </View>
         </View>
       )}
+      ListEmptyComponent={
+        <Text style={{ textAlign: "center", marginTop: 50 }}>
+          No orders found
+        </Text>
+      }
     />
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
-    backgroundColor: "#f8fafc",
     padding: 16,
+    backgroundColor: "#f8fafc",
+  },
+
+  loader: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
   },
 
   card: {
@@ -95,6 +136,11 @@ const styles = StyleSheet.create({
     marginTop: 6,
     fontWeight: "700",
     color: "#6d28d9",
+  },
+
+  quantity: {
+    marginTop: 4,
+    color: "#6b7280",
   },
 
   status: {
