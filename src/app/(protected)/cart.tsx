@@ -15,12 +15,13 @@ import { toast } from "sonner-native";
 
 export default function CartPage() {
   const { data } = authClient.useSession();
+
   if (!data?.user) {
     router.replace("/login");
     return;
   }
 
-  const [cartItems, setCartItems] = useState<CartItem[] | null>(null);
+  const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [loading, setLoading] = useState(false);
 
   const subtotal =
@@ -30,6 +31,7 @@ export default function CartPage() {
   const total = subtotal + tax + shipping;
 
   const fetchUserCart = async () => {
+    if (!data.user) return;
     setLoading(true);
     try {
       const res = await fetch(
@@ -51,6 +53,84 @@ export default function CartPage() {
   useEffect(() => {
     fetchUserCart();
   }, [data?.user?.id]);
+
+  const updateQuantity = async (productId: string, delta: number) => {
+    if (!data.user) return;
+    const baseUrl = process.env.EXPO_PUBLIC_BASE_URL;
+    try {
+      const endpoint =
+        delta > 0
+          ? `${baseUrl}/api/cart/increment`
+          : `${baseUrl}/api/cart/decrement`;
+      const res = await fetch(endpoint, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          userId: data.user.id,
+          productId,
+        }),
+      });
+      if (!res.ok) {
+        console.error("Server error:", res.status);
+        return;
+      }
+      const resData = await res.json();
+      const updatedQty = resData.quantity;
+
+      setCartItems((prev) =>
+        prev.map((item) =>
+          item.productId._id === productId
+            ? {
+                ...item,
+                quantity: updatedQty,
+                totalPrice: item.productId.price * updatedQty,
+              }
+            : item,
+        ),
+      );
+    } catch (error) {
+      console.log("Error updateing quantity:", (error as Error)?.message);
+      toast.error("Failed to update quantity, Try again later.");
+    }
+  };
+
+  const removeFromCart = async (productId: string) => {
+    if (!data.user) return;
+    try {
+      const res = await fetch(`${process.env.EXPO_PUBLIC_BASE_URL}/api/cart`, {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          userId: data?.user?.id,
+          productId,
+        }),
+      });
+      if (res.status === 200) {
+        setCartItems(
+          cartItems?.filter(
+            (item) => item.productId._id !== productId,
+          ) as CartItem[],
+        );
+      } else {
+        toast.error("Failed to remove. Try again later");
+      }
+    } catch (error) {
+      console.log("Error deleting item:", (error as Error)?.message);
+      toast.error("Failed to remove. Try again later");
+    }
+  };
+
+  if (loading) {
+    return (
+      <View style={styles.container}>
+        <Text>Loading...</Text>
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>
@@ -82,18 +162,21 @@ export default function CartPage() {
 
               <View style={styles.bottomRow}>
                 <View style={styles.quantityContainer}>
-                  <Pressable style={styles.quantityButton}>
+                  <Pressable style={styles.quantityButton} onPress={()=> updateQuantity(item.productId._id, -1)}>
                     <Ionicons name="remove" size={16} color="#111827" />
                   </Pressable>
 
                   <Text style={styles.quantityText}>{item?.quantity}</Text>
 
-                  <Pressable style={styles.quantityButton}>
+                  <Pressable style={styles.quantityButton} onPress={()=> updateQuantity(item.productId._id, 1)}>
                     <Ionicons name="add" size={16} color="#111827" />
                   </Pressable>
                 </View>
 
-                <Pressable style={styles.deleteButton}>
+                <Pressable
+                  style={styles.deleteButton}
+                  onPress={() => removeFromCart(item.productId._id)}
+                >
                   <Ionicons name="trash-outline" size={18} color="#ef4444" />
                 </Pressable>
               </View>
@@ -102,43 +185,44 @@ export default function CartPage() {
         )}
       />
 
-      <View style={styles.checkoutContainer}>
-        <View style={styles.summaryContainer}>
-          <View style={styles.summaryRow}>
-            <Text style={styles.summaryLabel}>Subtotal</Text>
-            <Text style={styles.summaryValue}>₹{subtotal?.toFixed(2)}</Text>
-          </View>
-
-          <View style={styles.summaryRow}>
-            <Text style={styles.summaryLabel}>Tax (8%)</Text>
-            <Text style={styles.summaryValue}>₹{tax?.toFixed(2)}</Text>
-          </View>
-
-          <View style={styles.summaryRow}>
-            <Text style={styles.summaryLabel}>Shipping</Text>
-            <Text style={styles.summaryValue}>
-              {shipping === 0 ? "Free" : `₹${shipping?.toFixed(2)}`}
-            </Text>
-          </View>
-
-          <View style={styles.divider} />
-
-          <View style={styles.totalContainer}>
-            <Text style={styles.totalText}>Total</Text>
-            <Text style={styles.totalAmount}>₹{total?.toFixed(2)}</Text>
-          </View>
-
-          <Pressable style={styles.checkoutButton}>
-            <View>
-              <Text style={styles.checkoutSmallText}>Pay Now</Text>
-
-              <Text style={styles.checkoutAmount}>₹{total?.toFixed(2)}</Text>
+      {cartItems?.length && (
+        <View style={styles.checkoutContainer}>
+          <View style={styles.summaryContainer}>
+            <View style={styles.summaryRow}>
+              <Text style={styles.summaryLabel}>Subtotal</Text>
+              <Text style={styles.summaryValue}>₹{subtotal?.toFixed(2)}</Text>
             </View>
 
-            <Ionicons name="arrow-forward-circle" size={28} color="#fff" />
-          </Pressable>
+            <View style={styles.summaryRow}>
+              <Text style={styles.summaryLabel}>Tax (8%)</Text>
+              <Text style={styles.summaryValue}>₹{tax?.toFixed(2)}</Text>
+            </View>
+
+            <View style={styles.summaryRow}>
+              <Text style={styles.summaryLabel}>Shipping</Text>
+              <Text style={styles.summaryValue}>
+                {shipping === 0 ? "Free" : `₹${shipping?.toFixed(2)}`}
+              </Text>
+            </View>
+
+            <View style={styles.divider} />
+
+            <View style={styles.totalContainer}>
+              <Text style={styles.totalText}>Total</Text>
+              <Text style={styles.totalAmount}>₹{total?.toFixed(2)}</Text>
+            </View>
+
+            <Pressable style={styles.checkoutButton}>
+              <View>
+                <Text style={styles.checkoutSmallText}>Pay Now</Text>
+                <Text style={styles.checkoutAmount}>₹{total?.toFixed(2)}</Text>
+              </View>
+
+              <Ionicons name="arrow-forward-circle" size={28} color="#fff" />
+            </Pressable>
+          </View>
         </View>
-      </View>
+      )}
     </View>
   );
 }

@@ -26,6 +26,7 @@ export type CartItem = {
   productId: {
     _id: string;
     name: string
+    price: number;
     description: string
     image: string;
     imagePublicId: string;
