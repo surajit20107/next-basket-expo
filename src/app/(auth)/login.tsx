@@ -12,13 +12,12 @@ import { useState } from "react";
 import { authClient } from "@/lib/auth-client";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 import { router } from "expo-router";
-// import { GoogleLogin } from "@/components/GoogleLogin";
+import { toast } from "sonner-native";
 
 export default function LoginScreen() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
   const handleLogin = async () => {
     setLoading(true);
@@ -28,11 +27,9 @@ export default function LoginScreen() {
         password,
         rememberMe: true,
       });
-      console.log("success");
       router.replace("/");
     } catch (error) {
-      console.log("Error logging in:", error);
-      setError((error as Error)?.message);
+      toast.error((error as Error)?.message || 'Server Error, Try again later')
     } finally {
       setLoading(false);
     }
@@ -115,7 +112,6 @@ export default function LoginScreen() {
                 {loading ? "logging in..." : "Login"}
               </Text>
             </Pressable>
-            {/* <GoogleLogin /> */}
           </View>
 
           <View style={styles.footerContainer}>
@@ -135,8 +131,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#f8fafc",
-    // justifyContent: "center",
-    // paddingHorizontal: 22,
   },
 
   card: {
