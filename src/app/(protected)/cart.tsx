@@ -15,6 +15,7 @@ import { toast } from "sonner-native";
 
 export default function CartPage() {
   const { data } = authClient.useSession();
+
   if (!data?.user) {
     router.replace("/login");
     return;
@@ -51,6 +52,41 @@ export default function CartPage() {
   useEffect(() => {
     fetchUserCart();
   }, [data?.user?.id]);
+
+  const removeFromCart = async (productId: string) => {
+    try {
+      const res = await fetch(`${process.env.EXPO_PUBLIC_BASE_URL}/api/cart`, {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          userId: data?.user?.id,
+          productId,
+        }),
+      });
+      if (res.status === 200) {
+        setCartItems(
+          cartItems?.filter(
+            (item) => item.productId._id !== productId,
+          ) as CartItem[],
+        );
+      } else {
+        toast.error("Failed to remove. Try again later");
+      }
+    } catch (error) {
+      console.log("Error deleting item:", (error as Error)?.message);
+      toast.error("Failed to remove. Try again later");
+    }
+  };
+
+  if (loading) {
+    return (
+      <View style={styles.container}>
+        <Text>Loading...</Text>
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>
@@ -93,7 +129,10 @@ export default function CartPage() {
                   </Pressable>
                 </View>
 
-                <Pressable style={styles.deleteButton}>
+                <Pressable
+                  style={styles.deleteButton}
+                  onPress={() => removeFromCart(item.productId._id)}
+                >
                   <Ionicons name="trash-outline" size={18} color="#ef4444" />
                 </Pressable>
               </View>
@@ -102,43 +141,44 @@ export default function CartPage() {
         )}
       />
 
-      <View style={styles.checkoutContainer}>
-        <View style={styles.summaryContainer}>
-          <View style={styles.summaryRow}>
-            <Text style={styles.summaryLabel}>Subtotal</Text>
-            <Text style={styles.summaryValue}>₹{subtotal?.toFixed(2)}</Text>
-          </View>
-
-          <View style={styles.summaryRow}>
-            <Text style={styles.summaryLabel}>Tax (8%)</Text>
-            <Text style={styles.summaryValue}>₹{tax?.toFixed(2)}</Text>
-          </View>
-
-          <View style={styles.summaryRow}>
-            <Text style={styles.summaryLabel}>Shipping</Text>
-            <Text style={styles.summaryValue}>
-              {shipping === 0 ? "Free" : `₹${shipping?.toFixed(2)}`}
-            </Text>
-          </View>
-
-          <View style={styles.divider} />
-
-          <View style={styles.totalContainer}>
-            <Text style={styles.totalText}>Total</Text>
-            <Text style={styles.totalAmount}>₹{total?.toFixed(2)}</Text>
-          </View>
-
-          <Pressable style={styles.checkoutButton}>
-            <View>
-              <Text style={styles.checkoutSmallText}>Pay Now</Text>
-
-              <Text style={styles.checkoutAmount}>₹{total?.toFixed(2)}</Text>
+      {cartItems?.length && (
+        <View style={styles.checkoutContainer}>
+          <View style={styles.summaryContainer}>
+            <View style={styles.summaryRow}>
+              <Text style={styles.summaryLabel}>Subtotal</Text>
+              <Text style={styles.summaryValue}>₹{subtotal?.toFixed(2)}</Text>
             </View>
 
-            <Ionicons name="arrow-forward-circle" size={28} color="#fff" />
-          </Pressable>
+            <View style={styles.summaryRow}>
+              <Text style={styles.summaryLabel}>Tax (8%)</Text>
+              <Text style={styles.summaryValue}>₹{tax?.toFixed(2)}</Text>
+            </View>
+
+            <View style={styles.summaryRow}>
+              <Text style={styles.summaryLabel}>Shipping</Text>
+              <Text style={styles.summaryValue}>
+                {shipping === 0 ? "Free" : `₹${shipping?.toFixed(2)}`}
+              </Text>
+            </View>
+
+            <View style={styles.divider} />
+
+            <View style={styles.totalContainer}>
+              <Text style={styles.totalText}>Total</Text>
+              <Text style={styles.totalAmount}>₹{total?.toFixed(2)}</Text>
+            </View>
+
+            <Pressable style={styles.checkoutButton}>
+              <View>
+                <Text style={styles.checkoutSmallText}>Pay Now</Text>
+                <Text style={styles.checkoutAmount}>₹{total?.toFixed(2)}</Text>
+              </View>
+
+              <Ionicons name="arrow-forward-circle" size={28} color="#fff" />
+            </Pressable>
+          </View>
         </View>
-      </View>
+      )}
     </View>
   );
 }
