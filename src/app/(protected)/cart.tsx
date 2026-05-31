@@ -25,8 +25,7 @@ export default function CartPage() {
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [loading, setLoading] = useState(false);
 
-  const subtotal =
-    cartItems?.reduce((sum, item) => sum + (item.totalPrice || 0), 0) || 0;
+  const subtotal = cartItems?.reduce((sum, item) => sum + (item.totalPrice || 0), 0) || 0;
   const tax = subtotal * 0.08; // 8% tax example
   const shipping = subtotal > 1500 ? 0 : 50; // Free shipping over rs 1500
   const total = subtotal + tax + shipping;
