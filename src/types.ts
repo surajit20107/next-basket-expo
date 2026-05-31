@@ -54,9 +54,6 @@ export type orderRespone = {
   createdAt: string;
 };
 
-
-// types.ts
-
 export interface Product {
   _id: string;
   name: string;

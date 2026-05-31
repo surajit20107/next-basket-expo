@@ -4,6 +4,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { useEffect, useState } from "react";
 import {
+  ActivityIndicator,
   FlatList,
   Image,
   Pressable,
@@ -27,7 +28,7 @@ export default function CartPage() {
   const subtotal =
     cartItems?.reduce((sum, item) => sum + (item.totalPrice || 0), 0) || 0;
   const tax = subtotal * 0.08; // 8% tax example
-  const shipping = subtotal > 500 ? 0 : 9.99; // Free shipping over rs 500
+  const shipping = subtotal > 1500 ? 0 : 50; // Free shipping over rs 1500
   const total = subtotal + tax + shipping;
 
   const fetchUserCart = async () => {
@@ -146,8 +147,8 @@ export default function CartPage() {
 
   if (loading) {
     return (
-      <View style={styles.container}>
-        <Text>Loading...</Text>
+      <View style={styles.loader}>
+        <ActivityIndicator size="large" />
       </View>
     );
   }
@@ -472,5 +473,11 @@ const styles = StyleSheet.create({
     fontSize: 28,
     fontWeight: "800",
     color: "#111827",
+  },
+
+  loader: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
   },
 });

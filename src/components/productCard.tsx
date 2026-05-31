@@ -1,24 +1,29 @@
+import { authClient } from "@/lib/auth-client";
 import type { ProductResponse } from "@/types";
+import { router } from "expo-router";
 import { useEffect, useState } from "react";
 import {
+  ActivityIndicator,
   Alert,
   FlatList,
   Image,
+  Pressable,
   StyleSheet,
   Text,
   View,
-  Pressable,
 } from "react-native";
-import { authClient } from "@/lib/auth-client";
 import { toast } from "sonner-native";
-import { router } from "expo-router";
 
 export function ProductCard() {
   const [product, setProduct] = useState<ProductResponse | null>(null);
+  const [loading, setLoading] = useState(true);
 
   async function fetchProduct() {
+    setLoading(true);
     try {
-      const res = await fetch(`${process.env.EXPO_PUBLIC_BASE_URL}/api/product`);
+      const res = await fetch(
+        `${process.env.EXPO_PUBLIC_BASE_URL}/api/product`,
+      );
 
       if (!res.ok) {
         console.log(res);
@@ -29,6 +34,8 @@ export function ProductCard() {
     } catch (error) {
       console.log(error);
       Alert.alert("Error fetching product");
+    } finally {
+      setLoading(false);
     }
   }
 
@@ -37,33 +44,40 @@ export function ProductCard() {
   }, []);
 
   const addProductToCart = async (productId: string) => {
-    const { data } = await authClient.getSession()
+    const { data } = await authClient.getSession();
 
     if (!data?.user) {
-      router.replace('/login')
-      return
+      router.replace("/login");
+      return;
     }
 
-    const userId = data?.user?.id
+    const userId = data?.user?.id;
 
     try {
       const res = await fetch(`${process.env.EXPO_PUBLIC_BASE_URL}/api/cart`, {
-        method: 'POST',
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
-        body: JSON.stringify({ userId, productId })
-      })
+        body: JSON.stringify({ userId, productId }),
+      });
 
       if (res.status === 200) {
-        toast.success('Added to cart.')
+        toast.success("Added to cart.");
       } else {
-        toast.error('Something went wrong, Try agin later.')
+        toast.error("Something went wrong, Try agin later.");
       }
-
     } catch (error) {
-      toast.error('Something went wrong, Try agin later.')
+      toast.error("Something went wrong, Try agin later.");
     }
+  };
+
+  if (loading) {
+    return (
+      <View style={styles.loader}>
+        <ActivityIndicator size="large" />
+      </View>
+    );
   }
 
   return (
@@ -100,7 +114,7 @@ export function ProductCard() {
                   <Text style={styles.rating}>{item.rating}</Text>
                 </View>
 
-                <Pressable onPress={()=>addProductToCart(item._id)}>
+                <Pressable onPress={() => addProductToCart(item._id)}>
                   <View style={styles.button}>
                     <Text style={styles.buttonText}>Add to Cart</Text>
                   </View>
@@ -205,5 +219,11 @@ const styles = StyleSheet.create({
     color: "#fff",
     fontWeight: "600",
     fontSize: 14,
+  },
+
+  loader: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
   },
 });

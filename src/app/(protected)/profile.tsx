@@ -1,65 +1,84 @@
-import {
-  View,
-  Text,
-  StyleSheet,
-  Image,
-  FlatList,
-  Pressable,
-  ScrollView,
-} from "react-native";
+import { authClient } from "@/lib/auth-client";
+import type { OrderProduct } from "@/types";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
-import { authClient } from "@/lib/auth-client";
+import { useEffect, useState } from "react";
+import {
+  ActivityIndicator,
+  FlatList,
+  Image,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+} from "react-native";
 import { toast } from "sonner-native";
 
-const recentOrders = [
-  {
-    _id: "6a183c944300588d8d3d4fda",
-    name: "Room Decor Painting",
-    price: 590,
-    image: "https://res.cloudinary.com/dwlfhknvs/image/upload/v1779971633/photo-1776193550369-3f9c6077b205_qhe5cs.jpg",
-  },
-  {
-    _id: "6a183d194300588d8d3d4fdc",
-    name: "Sports Shoes",
-    price: 499,
-    image: "https://res.cloudinary.com/dwlfhknvs/image/upload/v1779973347/photo-1779122873880-b2aa20d95e6c_etadyy.jpg",
-  },
-];
-
 export default function ProfilePage() {
-  const { data } = authClient.useSession();
+  const { data: session } = authClient.useSession();
+  if (!session?.user) return;
+
+  const [loading, setLoading] = useState(true);
+  const [recentOrders, setRecentOrders] = useState<OrderProduct[]>([]);
+
+  const fetchOrders = async () => {
+    try {
+      setLoading(true);
+      const url = `${process.env.EXPO_PUBLIC_BASE_URL}/api/order?userId=${session?.user.id}`;
+      const res = await fetch(url);
+      const text = await res.text();
+
+      if (!res.ok) {
+        toast.error(`API Error: ${res.status}`);
+        return;
+      }
+
+      const data = JSON.parse(text);
+      const products = data.flatMap((order: any) => order.products);
+
+      setRecentOrders(products);
+    } catch (error) {
+      console.log("Fetch Error:", error);
+      toast.error("Failed to fetch orders");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchOrders();
+  }, []);
 
   const handleLogout = async () => {
-    await authClient.signOut()
-    toast.success('Logged out')
-    router.replace('/login')
-  }
+    await authClient.signOut();
+    toast.success("Logged out");
+    router.replace("/login");
+  };
+
+  if (loading) {
+      return (
+        <View style={styles.loader}>
+          <ActivityIndicator size="large" />
+        </View>
+      );
+    }
 
   return (
-    <ScrollView
-      style={styles.container}
-      showsVerticalScrollIndicator={false}
-    >
+    <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
       <View style={styles.profileCard}>
         <View style={styles.avatar}>
           <Text style={styles.avatarText}>
-            {data?.user.image || data?.user?.name[0].toUpperCase()}
+            {session?.user.image || session?.user?.name[0].toUpperCase()}
           </Text>
         </View>
 
-        <Text style={styles.name}>{data?.user.name}</Text>
-        <Text style={styles.email}>{data?.user.email}</Text>
+        <Text style={styles.name}>{session?.user.name}</Text>
+        <Text style={styles.email}>{session?.user.email}</Text>
 
         <View style={styles.addressBox}>
-          <Ionicons
-            name="location-outline"
-            size={18}
-            color="#6d28d9"
-          />
-          <Text style={styles.address}>
-            221B Baker Street, London, UK
-          </Text>
+          <Ionicons name="location-outline" size={18} color="#6d28d9" />
+          <Text style={styles.address}>221B Baker Street, London, UK</Text>
         </View>
       </View>
 
@@ -68,61 +87,46 @@ export default function ProfilePage() {
           style={styles.primaryButton}
           onPress={() => router.push("/orders")}
         >
-          <Ionicons
-            name="receipt-outline"
-            size={18}
-            color="#fff"
-          />
-          <Text style={styles.primaryButtonText}>
-            View All Orders
-          </Text>
+          <Ionicons name="receipt-outline" size={18} color="#fff" />
+          <Text style={styles.primaryButtonText}>View All Orders</Text>
         </Pressable>
 
         <Pressable style={styles.logoutButton} onPress={handleLogout}>
-          <Ionicons
-            name="log-out-outline"
-            size={18}
-            color="#ef4444"
-          />
+          <Ionicons name="log-out-outline" size={18} color="#ef4444" />
           <Text style={styles.logoutText}>Logout</Text>
         </Pressable>
       </View>
 
       <View style={styles.sectionHeader}>
         <Text style={styles.sectionTitle}>Recent Orders</Text>
-        <Text style={styles.sectionSubtitle}>
-          Last 2 purchases
-        </Text>
+        <Text style={styles.sectionSubtitle}>Last 2 purchases</Text>
       </View>
 
       <FlatList
-        data={recentOrders}
+        // first reverse make last order on top
+        // splice takes 2 from top
+        // since its reversed so the top one on 2nd
+        // 2nd reverse make the 1st at top again
+        data={recentOrders.reverse().splice(2).reverse()}
         scrollEnabled={false}
         keyExtractor={(item) => item._id}
         renderItem={({ item }) => (
           <View style={styles.orderCard}>
             <Image
-              source={{ uri: item.image }}
+              source={{ uri: item.product.image }}
               style={styles.orderImage}
             />
 
             <View style={{ flex: 1 }}>
-              <Text
-                style={styles.orderName}
-                numberOfLines={1}
-              >
-                {item.name}
+              <Text style={styles.orderName} numberOfLines={1}>
+                {item.product.name}
               </Text>
 
-              <Text style={styles.orderPrice}>
-                ₹{item.price}
-              </Text>
+              <Text style={styles.orderPrice}>₹{item.product.price}</Text>
             </View>
 
             <View style={styles.completedBadge}>
-              <Text style={styles.completedText}>
-                Delivered
-              </Text>
+              <Text style={styles.completedText}>Delivered</Text>
             </View>
           </View>
         )}
@@ -199,6 +203,12 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     gap: 8,
+  },
+
+  loader: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
   },
 
   primaryButtonText: {

@@ -1,5 +1,5 @@
+import { ProductCard } from "@/components/productCard";
 import { View } from "react-native";
-import { ProductCard } from '@/components/productCard'
 
 export default function Index() {
   return (
