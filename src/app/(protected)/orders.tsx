@@ -9,12 +9,12 @@ import {
 import { useState, useEffect } from "react";
 import { authClient } from "@/lib/auth-client";
 import { toast } from "sonner-native";
-import type { OrderProduct } from "@/types";
+import type { OrderResponse } from "@/types";
 
 export default function OrdersPage() {
   const { data: session } = authClient.useSession();
 
-  const [orders, setOrders] = useState<OrderProduct[]>([]);
+  const [orders, setOrders] = useState<OrderResponse[]>([]);
   const [loading, setLoading] = useState(true);
 
   const fetchOrders = async () => {
@@ -31,10 +31,8 @@ export default function OrdersPage() {
       return;
     }
 
-    const data = JSON.parse(text);
-    const products = data.flatMap((order: any) => order.products);
-
-    setOrders(products);
+    const data: OrderResponse[] = JSON.parse(text);
+    setOrders(data);
   } catch (error) {
     console.log("Fetch Error:", error);
     toast.error("Failed to fetch orders");
@@ -61,48 +59,45 @@ export default function OrdersPage() {
 
   return (
     <FlatList
-      contentContainerStyle={styles.container}
-      data={orders}
-      keyExtractor={(item) => item._id}
-      renderItem={({ item }) => (
-        <View style={styles.card}>
-          <Image
-            source={{ uri: item.product.image }}
-            style={styles.image}
-          />
+  data={orders}
+  keyExtractor={(item) => item._id}
+  renderItem={({ item }) => {
+    const firstProduct = item.products[0];
 
-          <View style={{ flex: 1 }}>
-            <Text style={styles.name}>
-              {item.product.name}
-            </Text>
+    return (
+      <View style={styles.card}>
+        <Image
+          source={{ uri: firstProduct.product.image }}
+          style={styles.image}
+        />
 
-            <Text style={styles.price}>
-              ₹{item.product.price}
-            </Text>
+        <View style={{ flex: 1 }}>
+          <Text style={styles.name}>
+            {firstProduct.product.name}
+          </Text>
 
-            <Text style={styles.quantity}>
-              Quantity: {item.quantity}
-            </Text>
+          <Text style={styles.price}>
+            ₹{item.totalPrice}
+          </Text>
 
-            <Text style={styles.status}>
-              Ordered
-            </Text>
-          </View>
+          <Text style={styles.quantity}>
+            Quantity: {firstProduct.quantity}
+          </Text>
+
+          <Text style={styles.status}>
+            {item.status}
+          </Text>
         </View>
-      )}
-      ListEmptyComponent={
-        <Text style={{ textAlign: "center", marginTop: 50 }}>
-          No orders found
-        </Text>
-      }
-    />
+      </View>
+    );
+  }}
+/>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     padding: 16,
-    backgroundColor: "#f8fafc",
   },
 
   loader: {

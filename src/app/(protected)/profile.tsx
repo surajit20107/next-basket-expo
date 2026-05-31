@@ -1,5 +1,5 @@
 import { authClient } from "@/lib/auth-client";
-import type { OrderProduct } from "@/types";
+import type { OrderResponse } from "@/types";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { useEffect, useState } from "react";
@@ -20,26 +20,26 @@ export default function ProfilePage() {
   if (!session?.user) return;
 
   const [loading, setLoading] = useState(true);
-  const [recentOrders, setRecentOrders] = useState<OrderProduct[]>([]);
+  const [recentOrders, setRecentOrders] = useState<OrderResponse[]>([]);
 
   const fetchOrders = async () => {
     try {
       setLoading(true);
-      const url = `${process.env.EXPO_PUBLIC_BASE_URL}/api/order?userId=${session?.user.id}`;
-      const res = await fetch(url);
-      const text = await res.text();
+
+      const res = await fetch(
+        `${process.env.EXPO_PUBLIC_BASE_URL}/api/order?userId=${session?.user.id}`,
+      );
 
       if (!res.ok) {
-        toast.error(`API Error: ${res.status}`);
+        toast.error("Failed to fetch orders");
         return;
       }
 
-      const data = JSON.parse(text);
-      const products = data.flatMap((order: any) => order.products);
+      const data: OrderResponse[] = await res.json();
 
-      setRecentOrders(products);
+      setRecentOrders(data);
     } catch (error) {
-      console.log("Fetch Error:", error);
+      console.log(error);
       toast.error("Failed to fetch orders");
     } finally {
       setLoading(false);
@@ -57,12 +57,12 @@ export default function ProfilePage() {
   };
 
   if (loading) {
-      return (
-        <View style={styles.loader}>
-          <ActivityIndicator size="large" />
-        </View>
-      );
-    }
+    return (
+      <View style={styles.loader}>
+        <ActivityIndicator size="large" />
+      </View>
+    );
+  }
 
   return (
     <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
@@ -103,30 +103,42 @@ export default function ProfilePage() {
       </View>
 
       <FlatList
-        // first reverse make last order on top
-        // splice takes 2 from top
-        // since its reversed so the top one on 2nd
-        // 2nd reverse make the 1st at top again
-        data={recentOrders.reverse().splice(2).reverse()}
+        data={(recentOrders ?? []).slice().reverse().slice(0, 2)}
         scrollEnabled={false}
         keyExtractor={(item) => item._id}
         renderItem={({ item }) => (
           <View style={styles.orderCard}>
             <Image
-              source={{ uri: item.product.image }}
+              source={{
+                uri:
+                  item?.products?.[0]?.product?.image ||
+                  "https://via.placeholder.com/70",
+              }}
               style={styles.orderImage}
             />
 
             <View style={{ flex: 1 }}>
               <Text style={styles.orderName} numberOfLines={1}>
-                {item.product.name}
+                {item?.products?.[0]?.product?.name || "Unknown Product"}
               </Text>
 
-              <Text style={styles.orderPrice}>₹{item.product.price}</Text>
-            </View>
+              <Text style={styles.orderPrice}>₹{item?.totalPrice ?? 0}</Text>
 
-            <View style={styles.completedBadge}>
-              <Text style={styles.completedText}>Delivered</Text>
+              <Text
+                style={[
+                  styles.completedText,
+                  {
+                    color:
+                      item?.status === "Pending"
+                        ? "#d97706"
+                        : item?.status === "Delivered"
+                          ? "#16a34a"
+                          : "#2563eb",
+                  },
+                ]}
+              >
+                {item?.status || "Unknown"}
+              </Text>
             </View>
           </View>
         )}
