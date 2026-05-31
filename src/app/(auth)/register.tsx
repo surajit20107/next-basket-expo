@@ -1,49 +1,58 @@
+import { authClient } from "@/lib/auth-client";
+import { Ionicons } from "@expo/vector-icons";
+import { Link, router } from "expo-router";
+import { useState } from "react";
 import {
-  View,
+  Pressable,
+  ScrollView,
+  StyleSheet,
   Text,
   TextInput,
-  Pressable,
-  StyleSheet,
-  KeyboardAvoidingView,
-  Platform,
-  ScrollView,
-} from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import { Link } from 'expo-router';
-import { useState } from 'react';
-import { authClient } from '@/lib/auth-client';
-import { router } from "expo-router";
+  View
+} from "react-native";
+import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
+import { toast } from "sonner-native";
 
 export default function RegisterScreen() {
-  const [name, setName] = useState('');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  const handleLogin = async ()=> {
-    setLoading(false)
+  const handleLogin = async () => {
+    setLoading(false);
     try {
       await authClient.signUp.email({
         name,
         email,
-        password
-      })
-      router.replace('/')
+        password,
+      });
+      router.replace("/");
     } catch (error) {
       console.log((error as Error).message);
+      toast.error("Server Error, Try again later");
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   return (
-    <KeyboardAvoidingView
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-      style={styles.container}
+    <KeyboardAwareScrollView
+      contentContainerStyle={{
+        flexGrow: 1,
+      }}
+      enableOnAndroid
+      keyboardShouldPersistTaps="handled"
+      extraScrollHeight={30}
     >
       <ScrollView
-        contentContainerStyle={styles.scrollContainer}
+        contentContainerStyle={{
+          flexGrow: 1,
+          justifyContent: "center",
+          paddingHorizontal: 22,
+          paddingBottom: 40,
+        }}
+        keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.card}>
@@ -92,11 +101,7 @@ export default function RegisterScreen() {
             </View>
 
             <View style={styles.inputWrapper}>
-              <Ionicons
-                name="lock-closed-outline"
-                size={18}
-                color="#6b7280"
-              />
+              <Ionicons name="lock-closed-outline" size={18} color="#6b7280" />
 
               <TextInput
                 placeholder="Password"
@@ -122,28 +127,28 @@ export default function RegisterScreen() {
           </View>
         </View>
       </ScrollView>
-    </KeyboardAvoidingView>
+    </KeyboardAwareScrollView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f8fafc',
+    backgroundColor: "#f8fafc",
   },
 
   scrollContainer: {
     flexGrow: 1,
-    justifyContent: 'center',
+    justifyContent: "center",
     paddingHorizontal: 22,
     paddingVertical: 40,
   },
 
   card: {
-    backgroundColor: '#ffffff',
+    backgroundColor: "#ffffff",
     borderRadius: 28,
     padding: 24,
-    shadowColor: '#000',
+    shadowColor: "#000",
     shadowOffset: {
       width: 0,
       height: 4,
@@ -154,7 +159,7 @@ const styles = StyleSheet.create({
   },
 
   logoContainer: {
-    alignItems: 'center',
+    alignItems: "center",
     marginBottom: 28,
   },
 
@@ -162,21 +167,21 @@ const styles = StyleSheet.create({
     width: 62,
     height: 62,
     borderRadius: 20,
-    backgroundColor: '#6d28d9',
-    justifyContent: 'center',
-    alignItems: 'center',
+    backgroundColor: "#6d28d9",
+    justifyContent: "center",
+    alignItems: "center",
     marginBottom: 14,
   },
 
   logoText: {
     fontSize: 28,
-    fontWeight: '800',
-    color: '#111827',
+    fontWeight: "800",
+    color: "#111827",
     letterSpacing: -1,
   },
 
   logoAccent: {
-    color: '#6d28d9',
+    color: "#6d28d9",
   },
 
   headerContainer: {
@@ -185,15 +190,15 @@ const styles = StyleSheet.create({
 
   title: {
     fontSize: 26,
-    fontWeight: '700',
-    color: '#111827',
+    fontWeight: "700",
+    color: "#111827",
     marginBottom: 8,
   },
 
   subtitle: {
     fontSize: 15,
     lineHeight: 22,
-    color: '#6b7280',
+    color: "#6b7280",
   },
 
   formContainer: {
@@ -201,9 +206,9 @@ const styles = StyleSheet.create({
   },
 
   inputWrapper: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#f3f4f6',
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#f3f4f6",
     borderRadius: 16,
     paddingHorizontal: 14,
     height: 58,
@@ -212,42 +217,42 @@ const styles = StyleSheet.create({
 
   input: {
     flex: 1,
-    color: '#111827',
+    color: "#111827",
     fontSize: 15,
-    fontWeight: '500',
+    fontWeight: "500",
   },
 
   registerButton: {
     height: 58,
     borderRadius: 18,
-    backgroundColor: '#111827',
-    justifyContent: 'center',
-    alignItems: 'center',
+    backgroundColor: "#111827",
+    justifyContent: "center",
+    alignItems: "center",
     marginTop: 6,
   },
 
   registerButtonText: {
-    color: '#ffffff',
+    color: "#ffffff",
     fontSize: 16,
-    fontWeight: '700',
+    fontWeight: "700",
   },
 
   footerContainer: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
     gap: 6,
     marginTop: 24,
   },
 
   footerText: {
-    color: '#6b7280',
+    color: "#6b7280",
     fontSize: 14,
   },
 
   loginText: {
-    color: '#6d28d9',
+    color: "#6d28d9",
     fontSize: 14,
-    fontWeight: '700',
+    fontWeight: "700",
   },
 });
