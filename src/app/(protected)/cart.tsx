@@ -21,7 +21,7 @@ export default function CartPage() {
     return;
   }
 
-  const [cartItems, setCartItems] = useState<CartItem[] | null>(null);
+  const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [loading, setLoading] = useState(false);
 
   const subtotal =
@@ -31,6 +31,7 @@ export default function CartPage() {
   const total = subtotal + tax + shipping;
 
   const fetchUserCart = async () => {
+    if (!data.user) return;
     setLoading(true);
     try {
       const res = await fetch(
@@ -53,7 +54,50 @@ export default function CartPage() {
     fetchUserCart();
   }, [data?.user?.id]);
 
+  const updateQuantity = async (productId: string, delta: number) => {
+    if (!data.user) return;
+    const baseUrl = process.env.EXPO_PUBLIC_BASE_URL;
+    try {
+      const endpoint =
+        delta > 0
+          ? `${baseUrl}/api/cart/increment`
+          : `${baseUrl}/api/cart/decrement`;
+      const res = await fetch(endpoint, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          userId: data.user.id,
+          productId,
+        }),
+      });
+      if (!res.ok) {
+        console.error("Server error:", res.status);
+        return;
+      }
+      const resData = await res.json();
+      const updatedQty = resData.quantity;
+
+      setCartItems((prev) =>
+        prev.map((item) =>
+          item.productId._id === productId
+            ? {
+                ...item,
+                quantity: updatedQty,
+                totalPrice: item.productId.price * updatedQty,
+              }
+            : item,
+        ),
+      );
+    } catch (error) {
+      console.log("Error updateing quantity:", (error as Error)?.message);
+      toast.error("Failed to update quantity, Try again later.");
+    }
+  };
+
   const removeFromCart = async (productId: string) => {
+    if (!data.user) return;
     try {
       const res = await fetch(`${process.env.EXPO_PUBLIC_BASE_URL}/api/cart`, {
         method: "DELETE",
@@ -118,13 +162,13 @@ export default function CartPage() {
 
               <View style={styles.bottomRow}>
                 <View style={styles.quantityContainer}>
-                  <Pressable style={styles.quantityButton}>
+                  <Pressable style={styles.quantityButton} onPress={()=> updateQuantity(item.productId._id, -1)}>
                     <Ionicons name="remove" size={16} color="#111827" />
                   </Pressable>
 
                   <Text style={styles.quantityText}>{item?.quantity}</Text>
 
-                  <Pressable style={styles.quantityButton}>
+                  <Pressable style={styles.quantityButton} onPress={()=> updateQuantity(item.productId._id, 1)}>
                     <Ionicons name="add" size={16} color="#111827" />
                   </Pressable>
                 </View>
