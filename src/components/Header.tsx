@@ -1,13 +1,8 @@
-import { StyleSheet, Text, View, Pressable } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { Link, router } from "expo-router";
-import { authClient } from "@/lib/auth-client";
+import { Link } from "expo-router";
+import { Pressable, StyleSheet, Text, View } from "react-native";
 
 export function Header() {
-  const handleLogout = async () => {
-    await authClient.signOut()
-    router.replace('/login')
-  }
   return (
     <View style={styles.wrapper}>
       <View style={styles.container}>
@@ -22,9 +17,11 @@ export function Header() {
             </Pressable>
           </Link>
 
-          <Pressable style={styles.iconWrapper} onPress={handleLogout}>
-            <Ionicons name="grid-outline" size={21} color="#111" />
-          </Pressable>
+          <Link href="/profile" asChild>
+            <Pressable style={styles.iconWrapper}>
+              <Ionicons name="person-outline" size={21} color="#111" />
+            </Pressable>
+          </Link>
         </View>
       </View>
     </View>
