@@ -124,6 +124,26 @@ export default function CartPage() {
     }
   };
 
+  const handleCheckout = async () => {
+    try {
+      const res = await fetch(`${process.env.EXPO_PUBLIC_BASE_URL}/api/order`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ userId: data?.user?.id }),
+      });
+
+      if (res.status === 200) {
+        toast.success("Order placed successfully");
+        setCartItems([]);
+      }
+    } catch (error) {
+      console.error(error);
+      toast.error("Error placing order");
+    }
+  };
+
   if (loading) {
     return (
       <View style={styles.container}>
@@ -162,13 +182,19 @@ export default function CartPage() {
 
               <View style={styles.bottomRow}>
                 <View style={styles.quantityContainer}>
-                  <Pressable style={styles.quantityButton} onPress={()=> updateQuantity(item.productId._id, -1)}>
+                  <Pressable
+                    style={styles.quantityButton}
+                    onPress={() => updateQuantity(item.productId._id, -1)}
+                  >
                     <Ionicons name="remove" size={16} color="#111827" />
                   </Pressable>
 
                   <Text style={styles.quantityText}>{item?.quantity}</Text>
 
-                  <Pressable style={styles.quantityButton} onPress={()=> updateQuantity(item.productId._id, 1)}>
+                  <Pressable
+                    style={styles.quantityButton}
+                    onPress={() => updateQuantity(item.productId._id, 1)}
+                  >
                     <Ionicons name="add" size={16} color="#111827" />
                   </Pressable>
                 </View>
@@ -185,7 +211,7 @@ export default function CartPage() {
         )}
       />
 
-      {cartItems?.length && (
+      {cartItems.length > 0 && (
         <View style={styles.checkoutContainer}>
           <View style={styles.summaryContainer}>
             <View style={styles.summaryRow}>
@@ -212,7 +238,7 @@ export default function CartPage() {
               <Text style={styles.totalAmount}>₹{total?.toFixed(2)}</Text>
             </View>
 
-            <Pressable style={styles.checkoutButton}>
+            <Pressable style={styles.checkoutButton} onPress={handleCheckout}>
               <View>
                 <Text style={styles.checkoutSmallText}>Pay Now</Text>
                 <Text style={styles.checkoutAmount}>₹{total?.toFixed(2)}</Text>
