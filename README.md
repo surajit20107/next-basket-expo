@@ -1,56 +1,232 @@
-# Welcome to your Expo app 👋
+# 🛒 Next Basket Expo
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+A modern cross-platform e-commerce application built with **Expo**, **React Native**, and **TypeScript**. Next Basket Expo delivers a seamless shopping experience with secure authentication, product browsing, cart management, order tracking, and profile management, powered by a scalable backend architecture using **MongoDB** and **Redis**.
 
-## Get started
+## ✨ Features
 
-1. Install dependencies
+### 🔐 Authentication
 
-   ```bash
-   npm install
-   ```
+* Email & Password Authentication
+* Secure Session Management
+* Protected Routes
+* Better Auth Integration
 
-2. Start the app
+### 🛍️ Shopping Experience
 
-   ```bash
-   npx expo start
-   ```
+* Browse Products
+* View Product Details
+* Add to Cart
+* Update Cart Quantities Instantly
+* Place Orders
+* Order History & Tracking
 
-In the output, you'll find options to open the app in a
+### 👤 User Management
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+* User Profiles
+* Account Settings
+* Secure Authentication Flow
 
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
+### ⚡ Performance
 
-## Get a fresh project
+* Fast Cart Updates with Redis
+* Optimized Mobile Experience
+* Type-Safe Development with TypeScript
+* Cross-Platform Support (Android, iOS, Web)
 
-When you're ready, run:
+---
+
+## 🏗️ Tech Stack
+
+### Frontend
+
+* Expo
+* React Native
+* Expo Router
+* TypeScript
+
+### Authentication
+
+* Better Auth
+* Expo Secure Store
+* Expo Web Browser
+
+### Backend
+
+* MongoDB
+* Redis
+
+### Database Usage
+
+| Service | Purpose                                       |
+| ------- | --------------------------------------------- |
+| MongoDB | Users, Products, Orders, and Application Data |
+| Redis   | High-speed Cart Quantity Updates and Caching  |
+
+---
+
+## 📂 Project Structure
 
 ```bash
-npm run reset-project
+next-basket-expo/
+├── assets/                     # Images, icons, and static assets
+├── src/
+│   ├── app/                    # Expo Router screens and navigation
+│   │   └── _layout.tsx
+│   │
+│   ├── components/             # Reusable UI components
+│   │   ├── AuthHeader.tsx
+│   │   ├── GoogleLogin.tsx
+│   │   ├── Header.tsx
+│   │   └── productCard.tsx
+│   │
+│   ├── lib/                    # Authentication and shared utilities
+│   │   ├── auth.ts
+│   │   └── auth-client.ts
+│   │
+│   └── types.ts                # Shared TypeScript types
+│
+├── app.json                    # Expo configuration
+├── eas.json                    # EAS Build configuration
+├── package.json
+├── tsconfig.json
+└── README.md
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+---
 
-### Other setup steps
+## 🚀 Getting Started
 
-- To set up ESLint for linting, run `npx expo lint`, or follow our guide on ["Using ESLint and Prettier"](https://docs.expo.dev/guides/using-eslint/)
-- If you'd like to set up unit testing, follow our guide on ["Unit Testing with Jest"](https://docs.expo.dev/develop/unit-testing/)
-- Learn more about the TypeScript setup in this template in our guide on ["Using TypeScript"](https://docs.expo.dev/guides/typescript/)
+### Prerequisites
 
-## Learn more
+* Node.js 18+
+* npm, yarn, pnpm, or bun
+* Expo CLI
+* MongoDB Database
+* Redis Server
 
-To learn more about developing your project with Expo, look at the following resources:
+### Clone the Repository
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+```bash
+git clone https://github.com/surajit20107/next-basket-expo.git
+cd next-basket-expo
+```
 
-## Join the community
+### Install Dependencies
 
-Join our community of developers creating universal apps.
+```bash
+npm install
+```
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+### Configure Environment Variables
+
+Create a `.env` file in the root directory:
+
+```env
+EXPO_PUBLIC_BASE_URL=your_api_url
+```
+
+### Start Development Server
+
+```bash
+npx expo start
+```
+
+---
+
+## 📱 Run the App
+
+### Android
+
+```bash
+npx expo run:android
+```
+
+### iOS
+
+```bash
+npx expo run:ios
+```
+
+### Web
+
+```bash
+npx expo start --web
+```
+
+---
+
+## 🗄️ Backend Architecture
+
+### MongoDB
+
+Stores persistent application data:
+
+* Users
+* Products
+* Orders
+* Authentication Data
+* User Profiles
+
+### Redis
+
+Handles high-speed operations:
+
+* Cart Quantity Updates
+* Temporary Cart Storage
+* Session Caching
+* Performance Optimization
+
+This hybrid approach ensures fast user interactions while maintaining reliable long-term data storage.
+
+---
+
+## 🔮 Future Improvements
+
+* Product Search
+* Product Categories
+* Wishlist
+* Push Notifications
+* Dark Mode
+* Product Reviews & Ratings
+* Admin Dashboard
+
+---
+
+## 🤝 Contributing
+
+Contributions are welcome.
+
+1. Fork the repository
+2. Create your feature branch
+
+```bash
+git checkout -b feature/amazing-feature
+```
+
+3. Commit your changes
+
+```bash
+git commit -m "Add amazing feature"
+```
+
+4. Push to the branch
+
+```bash
+git push origin feature/amazing-feature
+```
+
+5. Open a Pull Request
+
+---
+
+## 📄 License
+
+This project is licensed under the MIT License.
+
+---
+
+## 👨‍💻 Author
+
+**Surajit**
+
+Built with ❤️ using Expo, React Native, MongoDB, Redis, and Better Auth.
