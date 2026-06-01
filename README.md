@@ -188,7 +188,6 @@ This hybrid approach ensures fast user interactions while maintaining reliable l
 * Push Notifications
 * Dark Mode
 * Product Reviews & Ratings
-* Admin Dashboard
 
 ---
 
